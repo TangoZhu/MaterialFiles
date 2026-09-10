@@ -12,13 +12,45 @@ jobs:
       uses: actions/checkout@v4
       with:
         submodules: true
+
     - name: Set up JDK 17
       uses: actions/setup-java@v4
       with:
         distribution: 'temurin'
         java-version: '21'
+
+    - name: Cache dav4jvm local repo
+      id: cache-dav4jvm
+      uses: actions/cache@v4
+      with:
+        path: local-maven-repo/com/github/bitfireAT/dav4jvm/ec6264d427
+        key: dav4jvm-ec6264d427
+
+    - name: Checkout dav4jvm at pinned commit
+      if: steps.cache-dav4jvm.outputs.cache-hit != 'true'
+      uses: actions/checkout@v4
+      with:
+        repository: bitfireAT/dav4jvm
+        ref: ec6264d427
+        path: dav4jvm-src
+
+    - name: Build and publish dav4jvm to local repo
+      if: steps.cache-dav4jvm.outputs.cache-hit != 'true'
+      working-directory: dav4jvm-src
+      env:
+        GIT_COMMIT: ec6264d427
+      run: ./gradlew publishMavenPublicationToDav4jvmRepository
+
+    - name: Copy dav4jvm artifact into local-maven-repo
+      if: steps.cache-dav4jvm.outputs.cache-hit != 'true'
+      run: |
+        mkdir -p local-maven-repo/com/github/bitfireAT/dav4jvm/ec6264d427
+        cp dav4jvm-src/build/repo/com/github/bitfireAT/dav4jvm/ec6264d427/* \
+           local-maven-repo/com/github/bitfireAT/dav4jvm/ec6264d427/
+
     - name: Build with Gradle
       run: ./gradlew assembleDebug lintVitalRelease
+
     - name: Upload artifact
       uses: actions/upload-artifact@v4
       with:
