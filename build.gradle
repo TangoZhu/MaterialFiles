@@ -24,6 +24,9 @@ buildscript {
 
 allprojects {
     repositories {
+        maven {
+            url uri("$rootDir/local-maven-repo")
+        }
         google()
         mavenCentral()
     }
